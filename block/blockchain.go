@@ -5,23 +5,47 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"github.com/nazeemnato/stonkcoin/utils"
 	"log"
 	"strings"
-
-	"github.com/nazeemnato/stonkcoin/utils"
+	"sync"
+	"time"
 )
 
 const (
 	MINING_DIFFICULTY = 4
 	MINING_SENDER     = "0x0"
 	MINING_REWARD     = 10
+	MINING_EVERY_SEC  = 30
 )
 
 type Blockchain struct {
 	transactionsPool []*Transaction
 	chain            []*Block
-	address          string
 	port             uint16
+	address          string
+	mux              sync.Mutex
+}
+
+type AmountRespone struct {
+	Amount float32 `json:"amount"`
+}
+
+func (ar *AmountRespone) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Amount float32 `json:"amount"`
+	}{
+		ar.Amount,
+	})
+}
+
+func (bc *Blockchain) CreateTransaction(sender string, recipient string, amount float32, senderPublicKey *ecdsa.PublicKey, signature *utils.Signature) bool {
+	isOk := bc.AddTransaction(sender, recipient, amount, senderPublicKey, signature)
+	return isOk
+}
+
+func (bc *Blockchain) TransactionPool() []*Transaction {
+	return bc.transactionsPool
 }
 
 func (bc *Blockchain) AddTransaction(sender string, recipient string, amount float32, senderPublicKey *ecdsa.PublicKey, signature *utils.Signature) bool {
@@ -112,12 +136,22 @@ func (bc *Blockchain) LastBlock() *Block {
 }
 
 func (bc *Blockchain) Mining() bool {
+	bc.mux.Lock()
+	defer bc.mux.Unlock()
+	if len(bc.transactionsPool) == 0 {
+		return false
+	}
 	bc.AddTransaction(MINING_SENDER, bc.address, MINING_REWARD, nil, nil)
 	nonce := bc.ProofOfWork()
 	prevHash := bc.LastBlock().Hash()
 	bc.CreateBlock(nonce, prevHash)
 	fmt.Println("Success!")
 	return true
+}
+
+func (bc *Blockchain) StartMining() {
+	bc.Mining()
+	_ = time.AfterFunc(time.Second*MINING_EVERY_SEC, bc.StartMining)
 }
 
 func (bc *Blockchain) CalculateTransaction(address string) float32 {

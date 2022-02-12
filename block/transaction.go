@@ -12,6 +12,14 @@ type Transaction struct {
 	amount           float32
 }
 
+type TransactionRequest struct {
+	SenderAddress   *string  `json:"sender_address"`
+	ReceiverAddress *string  `json:"receiver_address"`
+	SenderPublicKey *string  `json:"sender_public_key"`
+	Amount          *float32 `json:"amount"`
+	Signature       *string  `json:"signature"`
+}
+
 func NewTransaction(senderAddress string, recipientAddress string, amount float32) *Transaction {
 	transactions := new(Transaction)
 	transactions.senderAddress = senderAddress
@@ -37,4 +45,11 @@ func (t *Transaction) MarshalJSON() ([]byte, error) {
 		RecipientAddress: t.recipientAddress,
 		Amount:           t.amount,
 	})
+}
+
+func (tr *TransactionRequest) Validate() bool {
+	if tr.SenderAddress == nil || tr.ReceiverAddress == nil || tr.Amount == nil || tr.Signature == nil {
+		return false
+	}
+	return true
 }

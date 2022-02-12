@@ -127,7 +127,7 @@ func (w *Wallet) PublicKey() *ecdsa.PublicKey {
 // get private key in hex
 func (w *Wallet) PublicKeyStr() string {
 	// return w.privateKey.D.Text(16)
-	return fmt.Sprintf("%x%x", w.publicKey.X.Bytes(), w.publicKey.Y.Bytes())
+	return fmt.Sprintf("%064x%064x", w.publicKey.X.Bytes(), w.publicKey.Y.Bytes())
 }
 
 func (w *Wallet) Address() string {

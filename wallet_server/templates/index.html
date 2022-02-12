@@ -165,6 +165,19 @@
         alert("Transaction cancelled");
         return;
       }
+      // fetch balance of address every 5 seconds
+      setInterval(() => {
+        if (data?.address) {
+          fetch(`/balance?address=${data.address}`)
+            .then((response) => response.json())
+            .then((json) => {
+              document.getElementById("walle_amount").innerText = json.balance;
+            })
+            .catch((error) => {
+              console.log(error);
+            });
+        }
+      }, 5000);
     });
   </script>
 </html>
